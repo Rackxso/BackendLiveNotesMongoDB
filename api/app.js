@@ -2,6 +2,7 @@ import express from 'express';
 
 import cors from 'cors';
 
+
 import { conexionBD } from './data/db.js';
 import {PORT, URL} from './config.js'
 import { routerCuentas } from './router/cuenta.router.js';
