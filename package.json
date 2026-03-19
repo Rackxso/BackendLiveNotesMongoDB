@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "@vercel/analytics": "^1.6.1",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.21.1",
@@ -23,7 +24,7 @@
   "type": "module",
   "scripts": {
     "start": "node app/server.js",
-    "dev": "nodemon server.js",
+    "dev": "nodemon app/server.js",
     "test": "vitest",
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",

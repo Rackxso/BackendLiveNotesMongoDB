@@ -2,6 +2,8 @@
 import express from 'express';
 import cors from 'cors';
 import { apiRouter } from './router/index.router.js';
+import cookieParser from 'cookie-parser';
+
 
 const app = express();
 
@@ -11,6 +13,7 @@ const corsOption = {
     credentials: true
 }
 
+app.use(cookieParser());
 app.use(cors(corsOption));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

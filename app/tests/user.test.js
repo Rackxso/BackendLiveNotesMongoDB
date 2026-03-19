@@ -5,7 +5,6 @@ import app from '../app.js';
 import { User } from '../models/user.model.js';
 import { URI } from '../config.js';
 
-
 vi.mock('nodemailer', () => ({
     default: {
         createTransport: () => ({
@@ -19,7 +18,7 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-    await mongoose.connection.dropDatabase();
+    await User.deleteMany({});
 });
 
 afterAll(async () => {
@@ -27,6 +26,19 @@ afterAll(async () => {
     await mongoose.disconnect();
 });
 
+// ─── HELPER ───────────────────────────────────────────────────────────────────
+
+const crearUsuarioYLogin = async (permisos = 1) => {
+    await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos, verificado: true });
+    const res = await request(app)
+        .post('/api/user/login')
+        .send({ email: 'juan@test.com', password: '123456' });
+    
+    console.log('Login status:', res.status);      // 👈
+    console.log('Login body:', res.body);           // 👈
+    
+    return res.headers['set-cookie'];
+};
 // ─── REGISTER ────────────────────────────────────────────────────────────────
 
 describe('Test Register', () => {
@@ -118,6 +130,27 @@ describe('Test Login', () => {
         expect(res.body.message).toBe('Login exitoso');
     });
 
+    it('Debe devolver cookies con los tokens', async () => {
+        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+
+        const res = await request(app)
+            .post('/api/user/login')
+            .send({ email: 'juan@test.com', password: '123456' });
+
+        const cookies = res.headers['set-cookie'];
+        expect(cookies.some(c => c.startsWith('accessToken'))).toBe(true);
+        expect(cookies.some(c => c.startsWith('refreshToken'))).toBe(true);
+    });
+
+    it('Debe guardar el refreshToken en la BD', async () => {
+        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+
+        await request(app).post('/api/user/login').send({ email: 'juan@test.com', password: '123456' });
+
+        const user = await User.findOne({ email: 'juan@test.com' });
+        expect(user.refreshToken).not.toBeNull();
+    });
+
     it('Debe rechazar si el usuario no está verificado', async () => {
         await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: false });
 
@@ -147,6 +180,47 @@ describe('Test Login', () => {
     });
 });
 
+// ─── LOGOUT ───────────────────────────────────────────────────────────────────
+
+describe('Test Logout', () => {
+    it('Debe cerrar sesión correctamente', async () => {
+        const cookies = await crearUsuarioYLogin();
+
+        const res = await request(app)
+            .post('/api/user/logout')
+            .set('Cookie', cookies);
+
+        expect(res.status).toBe(200);
+        expect(res.body.message).toBe('Logout exitoso');
+    });
+
+    it('Debe limpiar el refreshToken de la BD', async () => {
+        const cookies = await crearUsuarioYLogin();
+
+        await request(app).post('/api/user/logout').set('Cookie', cookies);
+
+        const user = await User.findOne({ email: 'juan@test.com' });
+        expect(user.refreshToken).toBeNull();
+    });
+
+    it('Debe limpiar las cookies', async () => {
+        const cookies = await crearUsuarioYLogin();
+
+        const res = await request(app)
+            .post('/api/user/logout')
+            .set('Cookie', cookies);
+
+        const resCookies = res.headers['set-cookie'];
+        expect(resCookies.some(c => c.includes('accessToken=;'))).toBe(true);
+        expect(resCookies.some(c => c.includes('refreshToken=;'))).toBe(true);
+    });
+
+    it('Debe rechazar si no está autenticado', async () => {
+        const res = await request(app).post('/api/user/logout');
+        expect(res.status).toBe(401);
+    });
+});
+
 // ─── VERIFICAR EMAIL ──────────────────────────────────────────────────────────
 
 describe('Test Verificar Email', () => {
@@ -171,7 +245,6 @@ describe('Test Verificar Email', () => {
 
     it('Debe rechazar un token inválido', async () => {
         const res = await request(app).get('/api/user/verificar/tokeninvalido');
-
         expect(res.status).toBe(404);
     });
 });
@@ -180,18 +253,29 @@ describe('Test Verificar Email', () => {
 
 describe('Test Get Permisos', () => {
     it('Debe retornar los permisos del usuario', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
-        const res = await request(app).get('/api/user/juan@test.com/permisos');
+        const res = await request(app)
+            .get('/api/user/juan@test.com/permisos')
+            .set('Cookie', cookies);
 
         expect(res.status).toBe(200);
         expect(res.body.permisos).toBe(1);
     });
 
     it('Debe fallar si el usuario no existe', async () => {
-        const res = await request(app).get('/api/user/noexiste@test.com/permisos');
+        const cookies = await crearUsuarioYLogin();
+
+        const res = await request(app)
+            .get('/api/user/noexiste@test.com/permisos')
+            .set('Cookie', cookies);
 
         expect(res.status).toBe(404);
+    });
+
+    it('Debe rechazar si no está autenticado', async () => {
+        const res = await request(app).get('/api/user/juan@test.com/permisos');
+        expect(res.status).toBe(401);
     });
 });
 
@@ -199,9 +283,11 @@ describe('Test Get Permisos', () => {
 
 describe('Test Get User Info', () => {
     it('Debe retornar la info del usuario sin password ni permisos', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
-        const res = await request(app).get('/api/user/juan@test.com/info');
+        const res = await request(app)
+            .get('/api/user/juan@test.com/info')
+            .set('Cookie', cookies);
 
         expect(res.status).toBe(200);
         expect(res.body.name).toBe('Juan');
@@ -210,9 +296,18 @@ describe('Test Get User Info', () => {
     });
 
     it('Debe fallar si el usuario no existe', async () => {
-        const res = await request(app).get('/api/user/noexiste@test.com/info');
+        const cookies = await crearUsuarioYLogin();
+
+        const res = await request(app)
+            .get('/api/user/noexiste@test.com/info')
+            .set('Cookie', cookies);
 
         expect(res.status).toBe(404);
+    });
+
+    it('Debe rechazar si no está autenticado', async () => {
+        const res = await request(app).get('/api/user/juan@test.com/info');
+        expect(res.status).toBe(401);
     });
 });
 
@@ -220,10 +315,11 @@ describe('Test Get User Info', () => {
 
 describe('Test Upgrade Plan', () => {
     it('Debe actualizar el plan correctamente', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
         const res = await request(app)
             .post('/api/user/upgrade')
+            .set('Cookie', cookies)
             .send({ email: 'juan@test.com', newPermisos: 2 });
 
         expect(res.status).toBe(200);
@@ -231,21 +327,33 @@ describe('Test Upgrade Plan', () => {
     });
 
     it('Debe rechazar si el plan es el mismo', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
         const res = await request(app)
             .post('/api/user/upgrade')
+            .set('Cookie', cookies)
             .send({ email: 'juan@test.com', newPermisos: 1 });
 
         expect(res.status).toBe(400);
     });
 
     it('Debe fallar si el usuario no existe', async () => {
+        const cookies = await crearUsuarioYLogin();
+
         const res = await request(app)
             .post('/api/user/upgrade')
+            .set('Cookie', cookies)
             .send({ email: 'noexiste@test.com', newPermisos: 2 });
 
         expect(res.status).toBe(404);
+    });
+
+    it('Debe rechazar si no está autenticado', async () => {
+        const res = await request(app)
+            .post('/api/user/upgrade')
+            .send({ email: 'juan@test.com', newPermisos: 2 });
+
+        expect(res.status).toBe(401);
     });
 });
 
@@ -253,10 +361,11 @@ describe('Test Upgrade Plan', () => {
 
 describe('Test Update User', () => {
     it('Debe actualizar el nombre correctamente', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
         const res = await request(app)
             .put('/api/user/juan@test.com')
+            .set('Cookie', cookies)
             .send({ name: 'Pedro' });
 
         expect(res.status).toBe(200);
@@ -264,20 +373,28 @@ describe('Test Update User', () => {
     });
 
     it('Debe guardar el nuevo nombre en la BD', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
-        await request(app).put('/api/user/juan@test.com').send({ name: 'Pedro' });
+        await request(app).put('/api/user/juan@test.com').set('Cookie', cookies).send({ name: 'Pedro' });
 
         const user = await User.findOne({ email: 'juan@test.com' });
         expect(user.name).toBe('Pedro');
     });
 
     it('Debe fallar si el usuario no existe', async () => {
+        const cookies = await crearUsuarioYLogin();
+
         const res = await request(app)
             .put('/api/user/noexiste@test.com')
+            .set('Cookie', cookies)
             .send({ name: 'Pedro' });
 
         expect(res.status).toBe(404);
+    });
+
+    it('Debe rechazar si no está autenticado', async () => {
+        const res = await request(app).put('/api/user/juan@test.com').send({ name: 'Pedro' });
+        expect(res.status).toBe(401);
     });
 });
 
@@ -285,10 +402,11 @@ describe('Test Update User', () => {
 
 describe('Test Cambio de Contraseña', () => {
     it('Debe solicitar el cambio correctamente', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
         const res = await request(app)
             .put('/api/user/juan@test.com/password')
+            .set('Cookie', cookies)
             .send({ oldPassword: '123456' });
 
         expect(res.status).toBe(200);
@@ -296,19 +414,20 @@ describe('Test Cambio de Contraseña', () => {
     });
 
     it('Debe guardar el token de cambio de contraseña', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
-        await request(app).put('/api/user/juan@test.com/password').send({ oldPassword: '123456' });
+        await request(app).put('/api/user/juan@test.com/password').set('Cookie', cookies).send({ oldPassword: '123456' });
 
         const user = await User.findOne({ email: 'juan@test.com' });
         expect(user.tokenCambioPassword).not.toBeNull();
     });
 
     it('Debe rechazar si la contraseña actual es incorrecta', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
         const res = await request(app)
             .put('/api/user/juan@test.com/password')
+            .set('Cookie', cookies)
             .send({ oldPassword: 'wrongpassword' });
 
         expect(res.status).toBe(401);
@@ -352,24 +471,34 @@ describe('Test Cambio de Contraseña', () => {
 
         expect(res.status).toBe(404);
     });
+
+    it('Debe rechazar si no está autenticado en la solicitud', async () => {
+        const res = await request(app)
+            .put('/api/user/juan@test.com/password')
+            .send({ oldPassword: '123456' });
+
+        expect(res.status).toBe(401);
+    });
 });
 
 // ─── ELIMINACIÓN ──────────────────────────────────────────────────────────────
 
 describe('Test Eliminación de Cuenta', () => {
     it('Debe solicitar la eliminación correctamente', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
-        const res = await request(app).delete('/api/user/juan@test.com');
+        const res = await request(app)
+            .delete('/api/user/juan@test.com')
+            .set('Cookie', cookies);
 
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('Revisa tu email para confirmar la eliminación de tu cuenta');
     });
 
     it('Debe guardar el token de eliminación', async () => {
-        await User.create({ name: 'Juan', email: 'juan@test.com', password: '123456', permisos: 1, verificado: true });
+        const cookies = await crearUsuarioYLogin();
 
-        await request(app).delete('/api/user/juan@test.com');
+        await request(app).delete('/api/user/juan@test.com').set('Cookie', cookies);
 
         const user = await User.findOne({ email: 'juan@test.com' });
         expect(user.tokenEliminacion).not.toBeNull();
@@ -395,13 +524,21 @@ describe('Test Eliminación de Cuenta', () => {
 
     it('Debe rechazar un token inválido', async () => {
         const res = await request(app).delete('/api/user/confirmar/tokeninvalido');
-
         expect(res.status).toBe(404);
     });
 
     it('Debe fallar si el usuario no existe', async () => {
-        const res = await request(app).delete('/api/user/noexiste@test.com');
+        const cookies = await crearUsuarioYLogin();
+
+        const res = await request(app)
+            .delete('/api/user/noexiste@test.com')
+            .set('Cookie', cookies);
 
         expect(res.status).toBe(404);
+    });
+
+    it('Debe rechazar si no está autenticado', async () => {
+        const res = await request(app).delete('/api/user/juan@test.com');
+        expect(res.status).toBe(401);
     });
 });

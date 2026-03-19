@@ -8,9 +8,10 @@ import {
     sendSolicitarCambioPassword,
     sendPasswordCambiada,
     sendSolicitarEliminacion,
-    sendCuentaEliminada,
+    sendCuentaEliminada
 } from "../utils/mailer.js";
 
+import { generarAccessToken, generarRefreshToken } from "../utils/jwt.js";
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -21,9 +22,36 @@ export const login = async (req, res) => {
         if (!resultado.verificado) {
             return res.status(403).json({ message: "Debes verificar tu email antes de iniciar sesión" });
         }
+
+        const payload = { email: resultado.email, permisos: resultado.permisos };
+        const accessToken = generarAccessToken(payload);
+        const refreshToken = generarRefreshToken(payload);
+
+        // Guardar refresh token en BD
+        resultado.refreshToken = refreshToken;
+        await resultado.save();
+
+        // Guardar tokens en cookies HTTP-only
+        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 15 * 60 * 1000 });
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
         res.status(200).json({ message: "Login exitoso" });
     } catch (error) {
-        return res.status(500).json({ message: "Error al iniciar sesión" });
+        return res.status(500).json({ message: "Error al iniciar sesión" , error: error.message });
+    }
+};
+
+export const logout = async (req, res) => {
+    try {
+        const refreshToken = req.cookies.refreshToken;
+        if (refreshToken) {
+            await User.findOneAndUpdate({ refreshToken }, { refreshToken: null });
+        }
+        res.clearCookie('accessToken');
+        res.clearCookie('refreshToken');
+        res.status(200).json({ message: "Logout exitoso" });
+    } catch (error) {
+        return res.status(500).json({ message: "Error al cerrar sesión" });
     }
 };
 
