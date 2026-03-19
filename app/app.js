@@ -1,0 +1,27 @@
+// app.js — solo configuración
+import express from 'express';
+import cors from 'cors';
+import { apiRouter } from './router/index.router.js';
+
+const app = express();
+
+const corsOption = {
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}
+
+app.use(cors(corsOption));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use('/api', apiRouter);
+
+app.get('/', (req, res) => {
+    res.json({ message: 'API REST con Express.js' })
+});
+
+app.use((req, res) => {
+    res.status(404).json({ message: 'Página no encontrada' });
+});
+
+export default app;

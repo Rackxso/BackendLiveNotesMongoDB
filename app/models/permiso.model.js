@@ -1,4 +1,4 @@
-const mongoose = require('mongoose'); 
+import mongoose from 'mongoose'; 
 
 var permisoSchema = new mongoose.Schema({
     name:{
@@ -14,15 +14,11 @@ var permisoSchema = new mongoose.Schema({
     precio:{
         type:Number,
         required:true,
-    },
-    descripcion:{
-        type:String,
-        required:true,
-    },
+    }
 },{
     timestamps: false,
     collection: 'Permisos',
     versionKey: false
 });
 
-module.exports = mongoose.model('Permiso', permisoSchema);
+export const Permiso = mongoose.model('Permiso', permisoSchema);

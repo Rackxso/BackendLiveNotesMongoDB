@@ -1,7 +1,6 @@
-const mongoose = require('mongoose'); // Erase if already required
+import mongoose from "mongoose";
 
-// Declare the Schema of the Mongo model
-var movimientoSchema = new mongoose.Schema({
+const movimientoSchema = new mongoose.Schema({
     name:{
         type:String,
         required:true,
@@ -39,4 +38,4 @@ var movimientoSchema = new mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model('Movimiento', movimientoSchema);
+export const Movimiento = mongoose.model("Movimiento", movimientoSchema);

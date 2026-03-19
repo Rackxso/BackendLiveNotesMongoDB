@@ -1,4 +1,4 @@
-const mongoose = require('mongoose'); // Erase if already required
+import mongoose from 'mongoose'; // Erase if already required
 
 // Declare the Schema of the Mongo model
 var ToDoSchema = new mongoose.Schema({
@@ -29,4 +29,4 @@ var ToDoSchema = new mongoose.Schema({
 });
 
 //Export the model
-module.exports = mongoose.model('ToDo', ToDoSchema);
+export const ToDo = mongoose.model('ToDo', ToDoSchema);
