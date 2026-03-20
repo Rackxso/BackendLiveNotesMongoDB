@@ -23,7 +23,7 @@ export const login = async (req, res) => {
             return res.status(403).json({ message: "Debes verificar tu email antes de iniciar sesión" });
         }
 
-        const payload = { email: resultado.email, permisos: resultado.permisos };
+        const payload = { id: resultado._id, email: resultado.email, permisos: resultado.permisos };
         const accessToken = generarAccessToken(payload);
         const refreshToken = generarRefreshToken(payload);
 

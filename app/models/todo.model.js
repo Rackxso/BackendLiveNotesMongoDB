@@ -1,32 +1,33 @@
-import mongoose from 'mongoose'; // Erase if already required
+// models/todo.model.js
+import mongoose from 'mongoose';
+const { Schema } = mongoose;
 
-// Declare the Schema of the Mongo model
-var ToDoSchema = new mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-        unique: true,
-        index: true,
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    mobile: {
-        type: String,
-        required: true,
-        unique: true,
-    },
-    password: {
-        type: String,
-        required: true,
-    },
+const subItemSchema = new Schema({
+    usuario:     { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    texto:       { type: String, required: true },
+    completado:  { type: Boolean, default: false },
+    prioridad:   { type: Number, default: 1, min: 1, max: 10 },
+    fechaLimite: { type: Date, default: null },
+    etiquetas:   [{ type: String }],
+}, { _id: true, timestamps: true });
+
+const itemSchema = new Schema({
+    usuario:     { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    idLista:     { type: String, required: true, index: true },
+    texto:       { type: String, required: true },
+    completado:  { type: Boolean, default: false },
+    prioridad:   { type: Number, default: 1, min: 1, max: 10 },
+    fechaLimite: { type: Date, default: null },
+    etiquetas:   [{ type: String }],
+    subItems:    { type: [subItemSchema], default: [] },
 }, {
-    timestamps: false,
-    collection: 'ToDo',
+    timestamps: true,
+    collection: 'Todos',
     versionKey: false
 });
 
-//Export the model
-export const ToDo = mongoose.model('ToDo', ToDoSchema);
+itemSchema.index({ usuario: 1, idLista: 1 });
+itemSchema.index({ usuario: 1, prioridad: -1 });
+itemSchema.index({ usuario: 1, fechaLimite: 1 });
+
+export const Todo = mongoose.model('Todo', itemSchema);

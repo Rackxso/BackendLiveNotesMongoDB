@@ -4,6 +4,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    setupFiles: ['./app/tests/setup.js'],
+    sequence: {
+      concurrent: false,
+    },
+    fileParallelism: false, 
     include: ['app/tests/**/*.test.js'],
     coverage: {
       reporter: ['text', 'json', 'html'],

@@ -3,8 +3,7 @@ import mongoose from 'mongoose';
 const cuentaSchema = new mongoose.Schema({
     name: { 
         type: String, 
-        required: true, 
-        unique: true, 
+        required: true,
         index: true 
     },
     balance: { 
@@ -21,5 +20,7 @@ const cuentaSchema = new mongoose.Schema({
     collection: 'Cuentas',
     versionKey: false
 });
+
+cuentaSchema.index({ name: 1, usuario: 1 }, { unique: true });
 
 export const Cuenta = mongoose.model('Cuenta', cuentaSchema);

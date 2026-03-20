@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET, JWT_REFRESH_SECRET } from '../config.js';
 
 export const generarAccessToken = (payload) => {
-    console.log('JWT_SECRET:', JWT_SECRET); //
     return jwt.sign(payload, JWT_SECRET, { expiresIn: '15m' });
 };
 

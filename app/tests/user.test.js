@@ -5,25 +5,8 @@ import app from '../app.js';
 import { User } from '../models/user.model.js';
 import { URI } from '../config.js';
 
-vi.mock('nodemailer', () => ({
-    default: {
-        createTransport: () => ({
-            sendMail: vi.fn().mockResolvedValue(true)
-        })
-    }
-}));
-
-beforeAll(async () => {
-    await mongoose.connect(URI, { dbName: 'LiveNotes_test' });
-});
-
 afterEach(async () => {
     await User.deleteMany({});
-});
-
-afterAll(async () => {
-    await mongoose.connection.dropDatabase();
-    await mongoose.disconnect();
 });
 
 // ─── HELPER ───────────────────────────────────────────────────────────────────
@@ -33,9 +16,6 @@ const crearUsuarioYLogin = async (permisos = 1) => {
     const res = await request(app)
         .post('/api/user/login')
         .send({ email: 'juan@test.com', password: '123456' });
-    
-    console.log('Login status:', res.status);      // 👈
-    console.log('Login body:', res.body);           // 👈
     
     return res.headers['set-cookie'];
 };

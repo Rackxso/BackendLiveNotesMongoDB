@@ -31,10 +31,10 @@ export const authMiddleware = async (req, res, next) => {
         }
 
         // Generar nuevo access token
-        const newAccessToken = generarAccessToken({ email: user.email, permisos: user.permisos });
+        const newAccessToken = generarAccessToken({ id: user._id, email: user.email, permisos: user.permisos });
         res.cookie('accessToken', newAccessToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 15 * 60 * 1000 });
 
-        req.user = { email: user.email, permisos: user.permisos };
+        req.user = { id: user._id, email: user.email, permisos: user.permisos };
         next();
 
     } catch (error) {
