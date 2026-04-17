@@ -35,7 +35,7 @@ export const login = async (req, res) => {
         res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 15 * 60 * 1000 });
         res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-        res.status(200).json({ message: "Login exitoso" });
+        res.status(200).json({ message: "Login exitoso", user: { email: resultado.email, name: resultado.name } });
     } catch (error) {
         return res.status(500).json({ message: "Error al iniciar sesión" , error: error.message });
     }
@@ -63,8 +63,22 @@ export const register = async (req, res) => {
             return res.status(409).json({ message: "Ya existe un usuario con ese email" });
         }
         const token = generarToken();
-        await User.create({ name, email, password, permisos: 1, tokenVerificacion: token });
-        await sendVerificacionEmail(email, token);
+        const mailConfigured = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+
+        await User.create({
+            name, email, password, permisos: 1,
+            tokenVerificacion: mailConfigured ? token : null,
+            verificado: !mailConfigured
+        });
+
+        if (mailConfigured) {
+            try {
+                await sendVerificacionEmail(email, token);
+            } catch (mailError) {
+                console.warn("No se pudo enviar el email de verificación:", mailError.message);
+            }
+        }
+
         res.status(201).json({ message: "Usuario registrado, revisa tu email para verificar tu cuenta" });
     } catch (error) {
         return res.status(500).json({ message: "Error al registrar el usuario", error: error.message });

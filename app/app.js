@@ -8,6 +8,7 @@ import cookieParser from 'cookie-parser';
 const app = express();
 
 const corsOption = {
+    origin: 'http://localhost:4200',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
