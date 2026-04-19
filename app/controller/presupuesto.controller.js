@@ -2,6 +2,7 @@
 "use strict";
 
 import { Presupuesto } from '../models/presupuesto.model.js';
+import { Categoria } from '../models/categoria.model.js';
 
 export const getPresupuestos = async (req, res) => {
     try {
@@ -22,16 +23,24 @@ export const getPresupuestos = async (req, res) => {
 export const createPresupuesto = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { categoriaId, limite, mes, anio } = req.body;
+        const { nombre, color, limite, mes, anio } = req.body;
 
-        const check = await Presupuesto.findOne({ usuario: userId, categoria: categoriaId, mes, anio });
+        let categoria = await Categoria.findOne({ nombre, usuario: userId });
+        if (!categoria) {
+            categoria = await Categoria.create({ nombre, color, usuario: userId, predefinida: false });
+        } else if (color && categoria.color !== color) {
+            categoria.color = color;
+            await categoria.save();
+        }
+
+        const check = await Presupuesto.findOne({ usuario: userId, categoria: categoria._id, mes, anio });
         if (check) {
             return res.status(409).json({ message: 'Ya existe un presupuesto para esa categoría en ese mes' });
         }
 
         const presupuesto = await Presupuesto.create({
             usuario: userId,
-            categoria: categoriaId,
+            categoria: categoria._id,
             limite,
             mes,
             anio,

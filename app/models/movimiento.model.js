@@ -22,10 +22,10 @@ const movimientoSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    cuenta: {
+    usuario: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'Cuenta'
+        ref: 'Usuario'
     },
     metodo: {
         type: String,

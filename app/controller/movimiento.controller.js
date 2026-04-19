@@ -2,7 +2,6 @@
 "use strict";
 
 import { Movimiento } from '../models/movimiento.model.js';
-import { Cuenta } from '../models/cuenta.model.js';
 import { Meta } from '../models/meta.model.js';
 import { Presupuesto } from '../models/presupuesto.model.js';
 import { Categoria } from '../models/categoria.model.js';
@@ -10,22 +9,9 @@ import { Categoria } from '../models/categoria.model.js';
 export const getMovimientos = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { cuentaId, tipo, fechaDesde, fechaHasta, importeMin, importeMax } = req.query;
+        const { tipo, fechaDesde, fechaHasta, importeMin, importeMax } = req.query;
 
-        const cuentas = await Cuenta.find({ usuario: userId }).select('_id');
-        const cuentaIds = cuentas.map(c => c._id);
-
-        if (cuentaId) {
-            const cuentaValida = cuentaIds.some(id => id.toString() === cuentaId);
-            if (!cuentaValida) {
-                return res.status(403).json({ message: 'No tienes acceso a esa cuenta' });
-            }
-        }
-
-        if (cuentaIds.length === 0) return res.status(200).json([]);
-
-        const filtro = { cuenta: { $in: cuentaIds } };
-        if (cuentaId) filtro.cuenta = cuentaId;
+        const filtro = { usuario: userId };
         if (tipo !== undefined) filtro.tipo = tipo === 'true';
         if (fechaDesde || fechaHasta) {
             filtro.fecha = {};
@@ -50,15 +36,8 @@ export const getMovimientos = async (req, res) => {
 export const createMovimiento = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { name, fecha, destinatario, tipo, importe, cuentaId, metodo, metaId, categorias = [] } = req.body;
+        const { name, fecha, destinatario, tipo, importe, metodo, metaId, categorias = [] } = req.body;
 
-        // Verificar cuenta
-        const cuenta = await Cuenta.findOne({ _id: cuentaId, usuario: userId });
-        if (!cuenta) {
-            return res.status(404).json({ message: 'Cuenta no encontrada' });
-        }
-
-        // Verificar que las categorías existen y pertenecen al usuario o son predefinidas
         if (categorias.length > 0) {
             const categoriasValidas = await Categoria.find({
                 _id: { $in: categorias },
@@ -69,7 +48,6 @@ export const createMovimiento = async (req, res) => {
             }
         }
 
-        // Verificar meta
         if (metaId) {
             const meta = await Meta.findOne({ _id: metaId, usuario: userId });
             if (!meta) {
@@ -84,7 +62,6 @@ export const createMovimiento = async (req, res) => {
             await meta.save();
         }
 
-        // Actualizar presupuestos si hay categorías
         if (categorias.length > 0) {
             const fechaMovimiento = fecha ? new Date(fecha) : new Date();
             const mes = fechaMovimiento.getMonth() + 1;
@@ -121,13 +98,9 @@ export const createMovimiento = async (req, res) => {
             }
         }
 
-        // Actualizar balance cuenta
-        cuenta.balance = tipo ? cuenta.balance + importe : cuenta.balance - importe;
-        await cuenta.save();
-
         const movimiento = await Movimiento.create({
             name, fecha, destinatario, tipo, importe,
-            cuenta: cuentaId, metodo,
+            usuario: userId, metodo,
             metaId: metaId || null,
             categorias
         });

@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { routerCuentas } from "./cuenta.router.js";
 import { routerMovimientos } from "./movimiento.router.js";
 import { routerUser } from "./user.router.js";
 import { routerEvents } from "./evento.router.js";
@@ -16,7 +15,6 @@ const router = Router();
 router.use(routerNotas);
 router.use(routerCategorias);
 router.use(routerPresupuestos);
-router.use(routerCuentas);
 router.use(routerMovimientos);
 router.use(routerUser);
 router.use(routerEvents);
