@@ -7,5 +7,6 @@ const router = Router();
 
 router.get('/movimientos', authMiddleware, M.getMovimientos);
 router.post('/movimientos', authMiddleware, M.createMovimiento);
+router.delete('/movimientos/:id', authMiddleware, M.deleteMovimiento);
 
 export { router as routerMovimientos };

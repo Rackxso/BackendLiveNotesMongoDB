@@ -98,15 +98,44 @@ export const createMovimiento = async (req, res) => {
             }
         }
 
-        const movimiento = await Movimiento.create({
+        const movimiento = await (await Movimiento.create({
             name, fecha, destinatario, tipo, importe,
             usuario: userId, metodo,
             metaId: metaId || null,
             categorias
-        });
+        })).populate('categorias');
 
         res.status(201).json(movimiento);
     } catch (error) {
         return res.status(500).json({ message: 'Error al crear el movimiento' });
+    }
+};
+
+export const deleteMovimiento = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const movimiento = await Movimiento.findOne({ _id: id, usuario: userId });
+        if (!movimiento) {
+            return res.status(404).json({ message: 'Movimiento no encontrado' });
+        }
+
+        if (movimiento.metaId) {
+            const meta = await Meta.findById(movimiento.metaId);
+            if (meta) {
+                const delta = movimiento.tipo ? movimiento.importe : -movimiento.importe;
+                meta.acumulado = Math.max(0, meta.acumulado - delta);
+                meta.completada = meta.acumulado >= meta.meta;
+                const idx = meta.movimientos.findIndex(m => m.importe === movimiento.importe);
+                if (idx !== -1) meta.movimientos.splice(idx, 1);
+                await meta.save();
+            }
+        }
+
+        await movimiento.deleteOne();
+        res.status(200).json({ message: 'Movimiento eliminado exitosamente' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al eliminar el movimiento' });
     }
 };

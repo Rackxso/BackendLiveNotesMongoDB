@@ -38,13 +38,13 @@ export const createPresupuesto = async (req, res) => {
             return res.status(409).json({ message: 'Ya existe un presupuesto para esa categoría en ese mes' });
         }
 
-        const presupuesto = await Presupuesto.create({
+        const presupuesto = await (await Presupuesto.create({
             usuario: userId,
             categoria: categoria._id,
             limite,
             mes,
             anio,
-        });
+        })).populate('categoria');
 
         res.status(201).json(presupuesto);
     } catch (error) {

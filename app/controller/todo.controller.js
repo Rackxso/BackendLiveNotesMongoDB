@@ -22,7 +22,7 @@ export const getTodos = async (req, res) => {
             if (fechaHasta) filtro.fechaLimite.$lte = new Date(fechaHasta);
         }
 
-        let sort = { createdAt: -1 };
+        let sort = { order: 1, createdAt: -1 };
         if (orden === 'prioridad') sort = { prioridad: -1 };
         if (orden === 'fecha') sort = { fechaLimite: 1 };
 
@@ -151,6 +151,70 @@ export const updateSubItem = async (req, res) => {
         res.status(200).json(todo);
     } catch (error) {
         return res.status(500).json({ message: 'Error al actualizar el sub-item' });
+    }
+};
+
+// ─── LIST OPERATIONS ──────────────────────────────────────────────────────────
+
+export const deleteByList = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { listName } = req.params;
+        await Todo.deleteMany({ usuario: userId, idLista: listName });
+        res.status(200).json({ message: 'Lista eliminada' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al eliminar la lista' });
+    }
+};
+
+export const reassignList = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { listName } = req.params;
+        await Todo.updateMany({ usuario: userId, idLista: listName }, { $set: { idLista: '' } });
+        res.status(200).json({ message: 'Items movidos a sin lista' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al reasignar items' });
+    }
+};
+
+export const reorderTodos = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { items } = req.body;
+        const ops = items.map(({ _id, order }) => ({
+            updateOne: {
+                filter: { _id, usuario: userId },
+                update: { $set: { order } }
+            }
+        }));
+        await Todo.bulkWrite(ops);
+        res.status(200).json({ message: 'Orden actualizado' });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al reordenar' });
+    }
+};
+
+export const reorderSubItems = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+        const { items } = req.body;
+
+        const todo = await Todo.findOne({ _id: id, usuario: userId });
+        if (!todo) {
+            return res.status(404).json({ message: 'Item no encontrado' });
+        }
+
+        items.forEach(({ _id, order }) => {
+            const sub = todo.subItems.id(_id);
+            if (sub) sub.order = order;
+        });
+
+        await todo.save();
+        res.status(200).json(todo);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al reordenar sub-items' });
     }
 };
 

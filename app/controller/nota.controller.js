@@ -30,8 +30,8 @@ export const getNota = async (req, res) => {
 export const createNota = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { titulo, contenido } = req.body;
-        const nota = await Nota.create({ titulo, contenido, usuario: userId });
+        const { titulo, contenido, categoria } = req.body;
+        const nota = await Nota.create({ titulo, contenido, categoria, usuario: userId });
         res.status(201).json(nota);
     } catch (error) {
         return res.status(500).json({ message: 'Error al crear la nota' });
@@ -42,13 +42,14 @@ export const updateNota = async (req, res) => {
     try {
         const userId = req.user.id;
         const { id } = req.params;
-        const { titulo, contenido } = req.body;
+        const { titulo, contenido, categoria } = req.body;
         const nota = await Nota.findOne({ _id: id, usuario: userId });
         if (!nota) {
             return res.status(404).json({ message: 'Nota no encontrada' });
         }
         if (titulo !== undefined) nota.titulo = titulo;
         if (contenido !== undefined) nota.contenido = contenido;
+        if (categoria !== undefined) nota.categoria = categoria;
         await nota.save();
         res.status(200).json(nota);
     } catch (error) {
