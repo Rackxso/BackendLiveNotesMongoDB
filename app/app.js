@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { apiRouter } from './router/index.router.js';
 import cookieParser from 'cookie-parser';
+// import { stripeWebhook } from './controller/stripe.controller.js';
 
 
 const app = express();
@@ -16,6 +17,10 @@ const corsOption = {
 
 app.use(cookieParser());
 app.use(cors(corsOption));
+
+// [STRIPE] El webhook necesita raw body antes de express.json() — comentado hasta activar Stripe
+// app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api', apiRouter);

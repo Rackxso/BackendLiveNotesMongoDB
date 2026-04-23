@@ -35,7 +35,7 @@ export const login = async (req, res) => {
         res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 15 * 60 * 1000 });
         res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-        res.status(200).json({ message: "Login exitoso", user: { email: resultado.email, name: resultado.name } });
+        res.status(200).json({ message: "Login exitoso", user: { email: resultado.email, name: resultado.name, permisos: resultado.permisos } });
     } catch (error) {
         return res.status(500).json({ message: "Error al iniciar sesión" , error: error.message });
     }
@@ -196,11 +196,11 @@ export const getPermisos = async (req, res) => {
 export const getUserInfo = async (req, res) => {
     try {
         const { email } = req.params;
-        const resultado = await User.findOne({ email }).select('-password -permisos');
+        const resultado = await User.findOne({ email }).select('-password');
         if (!resultado) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
-        res.status(200).json(resultado);
+        res.status(200).json({ email: resultado.email, name: resultado.name, permisos: resultado.permisos });
     } catch (error) {
         return res.status(500).json({ message: "Error al obtener la información del usuario" });
     }

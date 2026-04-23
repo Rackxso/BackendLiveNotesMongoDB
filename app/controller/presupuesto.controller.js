@@ -44,10 +44,24 @@ export const getPresupuestos = async (req, res) => {
     }
 };
 
+const FREE_BUDGET_LIMIT = 3;
+const PREMIUM_PERMISOS = 2;
+
 export const createPresupuesto = async (req, res) => {
     try {
         const userId = req.user.id;
+        const userPermisos = req.user.permisos;
         const { nombre, color, limite, mes, anio } = req.body;
+
+        if (userPermisos < PREMIUM_PERMISOS) {
+            const today = new Date();
+            const currentMes = mes ?? today.getMonth() + 1;
+            const currentAnio = anio ?? today.getFullYear();
+            const count = await Presupuesto.countDocuments({ usuario: userId, mes: currentMes, anio: currentAnio });
+            if (count >= FREE_BUDGET_LIMIT) {
+                return res.status(403).json({ message: 'Límite de presupuestos alcanzado. Hazte premium para añadir más.', code: 'BUDGET_LIMIT_REACHED' });
+            }
+        }
 
         let categoria = await Categoria.findOne({ nombre, usuario: userId });
         if (!categoria) {

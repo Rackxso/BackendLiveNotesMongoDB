@@ -9,7 +9,8 @@
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "mongoose": "^9.1.6",
-    "nodemailer": "^8.0.3"
+    "nodemailer": "^8.0.3",
+    "stripe": "^22.0.2"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.0",
