@@ -8,6 +8,7 @@ const habitSchema = new Schema({
     rachaMasLarga:  { type: Number, default: 0 },
     ultimaRacha:    { type: Number, default: 0 },
     ultimoHecho:    { type: Date, default: null }, // para controlar el "una vez al día"
+    completionDates: [{ type: Date }],
 }, { timestamps: true, collection: 'Habits', versionKey: false });
 
 export const Habit = mongoose.model('Habit', habitSchema);

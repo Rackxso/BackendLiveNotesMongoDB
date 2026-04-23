@@ -165,6 +165,7 @@ export const marcarHabit = async (req, res) => {
         }
 
         habito.ultimoHecho = ahora;
+        habito.completionDates.push(ahora);
         await habito.save();
 
         res.status(200).json(habito);

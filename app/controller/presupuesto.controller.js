@@ -7,13 +7,37 @@ import { Categoria } from '../models/categoria.model.js';
 export const getPresupuestos = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { mes, anio } = req.query;
+        const today = new Date();
+        const currentMes  = today.getMonth() + 1;
+        const currentAnio = today.getFullYear();
 
-        const filtro = { usuario: userId };
-        if (mes) filtro.mes = Number(mes);
-        if (anio) filtro.anio = Number(anio);
+        const targetMes  = req.query.mes  ? Number(req.query.mes)  : currentMes;
+        const targetAnio = req.query.anio ? Number(req.query.anio) : currentAnio;
 
-        const presupuestos = await Presupuesto.find(filtro).populate('categoria');
+        let presupuestos = await Presupuesto.find({ usuario: userId, mes: targetMes, anio: targetAnio }).populate('categoria');
+
+        // Auto-rollover: si el mes actual no tiene presupuestos, copiarlos del mes anterior con acumulado=0
+        const isCurrentMonth = targetMes === currentMes && targetAnio === currentAnio;
+        if (isCurrentMonth && presupuestos.length === 0) {
+            const prevMes  = currentMes === 1 ? 12 : currentMes - 1;
+            const prevAnio = currentMes === 1 ? currentAnio - 1 : currentAnio;
+            const anteriores = await Presupuesto.find({ usuario: userId, mes: prevMes, anio: prevAnio }).populate('categoria');
+
+            if (anteriores.length > 0) {
+                await Promise.all(anteriores.map(p =>
+                    Presupuesto.create({
+                        usuario:   userId,
+                        categoria: p.categoria._id,
+                        limite:    p.limite,
+                        mes:       currentMes,
+                        anio:      currentAnio,
+                        acumulado: 0,
+                    })
+                ));
+                presupuestos = await Presupuesto.find({ usuario: userId, mes: targetMes, anio: targetAnio }).populate('categoria');
+            }
+        }
+
         res.status(200).json(presupuestos);
     } catch (error) {
         return res.status(500).json({ message: 'Error al obtener los presupuestos' });
