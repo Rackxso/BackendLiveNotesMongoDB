@@ -62,6 +62,8 @@ var userSchema = new mongoose.Schema({
         default: null 
     },
     refreshToken: { type: String, default: null },
+    stripeCustomerId: { type: String, default: null },
+    stripeSubscriptionId: { type: String, default: null },
 }, {
     timestamps: false,
     collection: 'Users',

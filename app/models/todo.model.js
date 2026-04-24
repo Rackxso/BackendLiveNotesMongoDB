@@ -18,6 +18,8 @@ const itemSchema = new Schema({
     texto:       { type: String, required: true },
     completado:  { type: Boolean, default: false },
     prioridad:   { type: Number, default: 1, min: 1, max: 10 },
+    dificultad:  { type: Number, default: 3, min: 1, max: 5 },
+    importancia: { type: Number, default: 3, min: 0, max: 3 },
     fechaLimite: { type: Date, default: null },
     etiquetas:   [{ type: String }],
     subItems:    { type: [subItemSchema], default: [] },

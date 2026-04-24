@@ -14,8 +14,7 @@ export const URL=process.env.URL
 export const MAIL_USER = process.env.EMAIL_USER;
 export const MAIL_PASS = process.env.EMAIL_PASS;
 
-// [STRIPE] Descomenta cuando tengas las claves en .env
-// export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-// export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-// export const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID;
+export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+export const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID;
 export const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:4200';

@@ -3,13 +3,13 @@ import express from 'express';
 import cors from 'cors';
 import { apiRouter } from './router/index.router.js';
 import cookieParser from 'cookie-parser';
-// import { stripeWebhook } from './controller/stripe.controller.js';
+import { stripeWebhook } from './controller/stripe.controller.js';
 
 
 const app = express();
 
 const corsOption = {
-    origin: 'http://localhost:4200',
+    origin: process.env.FRONTEND_URL,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -18,8 +18,8 @@ const corsOption = {
 app.use(cookieParser());
 app.use(cors(corsOption));
 
-// [STRIPE] El webhook necesita raw body antes de express.json() — comentado hasta activar Stripe
-// app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
+// El webhook necesita el body en raw antes de express.json()
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

@@ -50,14 +50,16 @@ export const getTodo = async (req, res) => {
 export const createTodo = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { texto, idLista, prioridad, fechaLimite, etiquetas } = req.body;
+        const { texto, idLista, prioridad, fechaLimite, etiquetas, dificultad, importancia } = req.body;
         const todo = await Todo.create({
             usuario: userId,
             texto,
             idLista,
             prioridad,
             fechaLimite,
-            etiquetas
+            etiquetas,
+            dificultad,
+            importancia,
         });
         res.status(201).json(todo);
     } catch (error) {
@@ -69,7 +71,7 @@ export const updateTodo = async (req, res) => {
     try {
         const userId = req.user.id;
         const { id } = req.params;
-        const { texto, idLista, prioridad, fechaLimite, etiquetas, completado } = req.body;
+        const { texto, idLista, prioridad, fechaLimite, etiquetas, completado, dificultad, importancia } = req.body;
 
         const todo = await Todo.findOne({ _id: id, usuario: userId });
         if (!todo) {
@@ -82,6 +84,8 @@ export const updateTodo = async (req, res) => {
         if (fechaLimite !== undefined) todo.fechaLimite = fechaLimite;
         if (etiquetas !== undefined) todo.etiquetas = etiquetas;
         if (completado !== undefined) todo.completado = completado;
+        if (dificultad !== undefined) todo.dificultad = dificultad;
+        if (importancia !== undefined) todo.importancia = importancia;
 
         await todo.save();
         res.status(200).json(todo);
