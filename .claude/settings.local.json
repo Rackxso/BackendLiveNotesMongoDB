@@ -6,7 +6,8 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\oscar\\\\Documents\\\\Ciclo Superior Web\\\\Segundo\\\\LiveNotesDesplegado\\\\Backend\\\\app\" -Recurse | Select-Object -First 30 | ForEach-Object { $_.FullName })",
       "Bash(npm test *)",
       "Bash(npm install *)",
-      "Bash(npm uninstall *)"
+      "Bash(npm uninstall *)",
+      "Bash(git merge *)"
     ]
   }
 }
