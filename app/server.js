@@ -7,6 +7,16 @@ conexionBD()
     .then(() => {
         app.listen(PORT, () => {
             console.log(`Servidor corriendo en ${URL}:${PORT}`);
+
+            if (process.env.NODE_ENV === 'production') {
+                setInterval(async () => {
+                    try {
+                        await fetch(`${URL}/health`);
+                    } catch (err) {
+                        console.log('Self-ping fallido:', err.message);
+                    }
+                }, 10 * 60 * 1000);
+            }
         })
     })
     .catch(err => {

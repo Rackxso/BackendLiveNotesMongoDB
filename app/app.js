@@ -29,6 +29,10 @@ app.get('/', (req, res) => {
     res.json({ message: 'API REST con Express.js' })
 });
 
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok' });
+});
+
 app.use((req, res) => {
     res.status(404).json({ message: 'Página no encontrada' });
 });
