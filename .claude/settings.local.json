@@ -20,7 +20,8 @@
       "Bash(git update-ref *)",
       "Bash(rm -rf .git/rebase-merge)",
       "Bash(git checkout *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(npx ng *)"
     ]
   }
 }

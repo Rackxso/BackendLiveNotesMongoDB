@@ -39,7 +39,12 @@ export const login = async (req, res) => {
         res.cookie('accessToken', accessToken, { ...cookieOpts, maxAge: 15 * 60 * 1000 });
         res.cookie('refreshToken', refreshToken, { ...cookieOpts, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-        res.status(200).json({ message: "Login exitoso", user: { email: resultado.email, name: resultado.name, permisos: resultado.permisos } });
+        res.status(200).json({
+            message: "Login exitoso",
+            user: { email: resultado.email, name: resultado.name, permisos: resultado.permisos },
+            accessToken,
+            refreshToken
+        });
     } catch (error) {
         return res.status(500).json({ message: "Error al iniciar sesión" , error: error.message });
     }
@@ -47,7 +52,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const refreshToken = req.body?.refreshToken ?? req.cookies?.refreshToken;
         if (refreshToken) {
             await User.findOneAndUpdate({ refreshToken }, { refreshToken: null });
         }
@@ -56,6 +61,22 @@ export const logout = async (req, res) => {
         res.status(200).json({ message: "Logout exitoso" });
     } catch (error) {
         return res.status(500).json({ message: "Error al cerrar sesión" });
+    }
+};
+
+export const refresh = async (req, res) => {
+    try {
+        const token = req.body?.refreshToken ?? req.cookies?.refreshToken;
+        if (!token) return res.status(401).json({ message: "No autenticado" });
+        const payload = verificarRefreshToken(token);
+        const user = await User.findOne({ email: payload.email, refreshToken: token });
+        if (!user) return res.status(401).json({ message: "Sesión inválida" });
+        const accessToken = generarAccessToken({ id: user._id, email: user.email, permisos: user.permisos });
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+        res.cookie('accessToken', accessToken, { httpOnly: true, secure: isSecure, sameSite: isSecure ? 'none' : 'lax', maxAge: 15 * 60 * 1000 });
+        res.status(200).json({ accessToken });
+    } catch {
+        return res.status(401).json({ message: "Sesión inválida" });
     }
 };
 

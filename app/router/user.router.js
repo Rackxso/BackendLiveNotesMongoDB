@@ -8,7 +8,8 @@ import { authMiddleware } from "../middleware/auth.middleware.js";
 // Auth
 router.post("/user/register", X.register);
 router.post("/user/login", X.login);
-router.post("/user/logout", authMiddleware, X.logout);
+router.post("/user/logout", X.logout);
+router.post("/user/refresh", X.refresh);
 
 // Verificación de email
 router.get("/user/verificar/:token", X.verificarEmail);
