@@ -2,6 +2,7 @@
 
 import { Router } from "express";
 import * as X from "../controller/user.controller.js";
+;
 const router = Router();
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
@@ -24,6 +25,7 @@ router.post("/user/upgrade", authMiddleware, X.upgradePlan);
 // Cambio de contraseña (autenticado)
 router.put("/user/:email/password", authMiddleware, X.solicitarCambioPassword);
 router.post("/user/password/:token", X.confirmarCambioPassword);
+router.get("/user/password/:token", X.confirmarCambioPasswordGet);
 
 // Recuperación de contraseña (sin autenticación)
 router.post("/user/forgot-password", X.forgotPassword);
@@ -32,5 +34,6 @@ router.post("/user/reset-password/:token", X.resetPassword);
 // Eliminación
 router.delete("/user/:email", authMiddleware, X.solicitarEliminacion);
 router.delete("/user/confirmar/:token", X.confirmarEliminacion);
+router.get("/user/confirmar/:token", X.confirmarEliminacionGet);
 
 export { router as routerUser };

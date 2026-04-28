@@ -92,22 +92,25 @@ export const verificarEmail = async (req, res) => {
         const { token } = req.params;
         const resultado = await User.findOne({ tokenVerificacion: token });
         if (!resultado) {
-            return res.status(404).json({ message: "Token inválido" });
+            return res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
         }
         resultado.verificado = true;
         resultado.tokenVerificacion = null;
         await resultado.save();
         await sendEmailVerificado(resultado.email);
-        res.status(200).json({ message: "Email verificado exitosamente" });
+        res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=verificacion`);
     } catch (error) {
-        return res.status(500).json({ message: "Error al verificar el email" });
+        res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
     }
 };
 
 export const solicitarCambioPassword = async (req, res) => {
     try {
         const { email } = req.params;
-        const { oldPassword } = req.body;
+        const { oldPassword, newPassword } = req.body;
+        if (!newPassword) {
+            return res.status(400).json({ message: "La nueva contraseña es requerida" });
+        }
         const resultado = await User.findOne({ email });
         if (!resultado) {
             return res.status(404).json({ message: "Usuario no encontrado" });
@@ -115,9 +118,13 @@ export const solicitarCambioPassword = async (req, res) => {
         if (resultado.password !== oldPassword) {
             return res.status(401).json({ message: "Contraseña actual incorrecta" });
         }
+        if (resultado.password === newPassword) {
+            return res.status(400).json({ message: "La nueva contraseña no puede ser igual a la actual" });
+        }
         const token = generarToken();
         resultado.tokenCambioPassword = token;
-        resultado.tokenCambioPasswordExpira = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+        resultado.tokenCambioPasswordExpira = new Date(Date.now() + 60 * 60 * 1000);
+        resultado.newPasswordPending = newPassword;
         await resultado.save();
         await sendSolicitarCambioPassword(email, token);
         res.status(200).json({ message: "Revisa tu email para confirmar el cambio de contraseña" });
@@ -143,11 +150,34 @@ export const confirmarCambioPassword = async (req, res) => {
         resultado.password = newPassword;
         resultado.tokenCambioPassword = null;
         resultado.tokenCambioPasswordExpira = null;
+        resultado.newPasswordPending = null;
         await resultado.save();
         await sendPasswordCambiada(resultado.email);
         res.status(200).json({ message: "Contraseña actualizada exitosamente" });
     } catch (error) {
         return res.status(500).json({ message: "Error al confirmar el cambio de contraseña" });
+    }
+};
+
+export const confirmarCambioPasswordGet = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const resultado = await User.findOne({ tokenCambioPassword: token });
+        if (!resultado || !resultado.newPasswordPending) {
+            return res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
+        }
+        if (tokenExpirado(resultado.tokenCambioPasswordExpira)) {
+            return res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
+        }
+        resultado.password = resultado.newPasswordPending;
+        resultado.newPasswordPending = null;
+        resultado.tokenCambioPassword = null;
+        resultado.tokenCambioPasswordExpira = null;
+        await resultado.save();
+        await sendPasswordCambiada(resultado.email);
+        res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=password`);
+    } catch (error) {
+        res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
     }
 };
 
@@ -220,6 +250,20 @@ export const confirmarEliminacion = async (req, res) => {
         res.status(200).json({ message: "Cuenta eliminada exitosamente" });
     } catch (error) {
         return res.status(500).json({ message: "Error al confirmar la eliminación de la cuenta" });
+    }
+};
+
+export const confirmarEliminacionGet = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const resultado = await User.findOneAndDelete({ tokenEliminacion: token });
+        if (!resultado) {
+            return res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
+        }
+        await sendCuentaEliminada(resultado.email);
+        res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=eliminacion`);
+    } catch (error) {
+        res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
     }
 };
 

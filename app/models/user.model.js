@@ -57,10 +57,11 @@ var userSchema = new mongoose.Schema({
         type: String, 
         default: null 
     },
-    tokenCambioPasswordExpira: { 
-        type: Date, 
-        default: null 
+    tokenCambioPasswordExpira: {
+        type: Date,
+        default: null
     },
+    newPasswordPending: { type: String, default: null },
     refreshToken: { type: String, default: null },
     stripeCustomerId: { type: String, default: null },
     stripeSubscriptionId: { type: String, default: null },
