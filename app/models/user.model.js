@@ -34,11 +34,6 @@ var userSchema = new mongoose.Schema({
         required: false,
         default: null
     },
-    googleId: {
-        type: String,
-        default: null,
-        index: true
-    },
     permisos: {
         type: Number,
         required: [true, 'Debe tener un permiso'],

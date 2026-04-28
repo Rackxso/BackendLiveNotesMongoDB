@@ -32,8 +32,8 @@ export const authMiddleware = async (req, res, next) => {
 
         // Generar nuevo access token
         const newAccessToken = generarAccessToken({ id: user._id, email: user.email, permisos: user.permisos });
-        const isProd = process.env.NODE_ENV === 'production';
-        res.cookie('accessToken', newAccessToken, { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax', maxAge: 15 * 60 * 1000 });
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+        res.cookie('accessToken', newAccessToken, { httpOnly: true, secure: isSecure, sameSite: isSecure ? 'none' : 'lax', maxAge: 15 * 60 * 1000 });
 
         req.user = { id: user._id, email: user.email, permisos: user.permisos };
         next();

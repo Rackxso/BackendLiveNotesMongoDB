@@ -2,7 +2,6 @@
 
 import { Router } from "express";
 import * as X from "../controller/user.controller.js";
-import passport from "../config/passport.js";
 const router = Router();
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
@@ -10,13 +9,6 @@ import { authMiddleware } from "../middleware/auth.middleware.js";
 router.post("/user/register", X.register);
 router.post("/user/login", X.login);
 router.post("/user/logout", authMiddleware, X.logout);
-
-// Google OAuth
-router.get("/user/auth/google", passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
-router.get("/user/auth/google/callback",
-    passport.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL ?? 'http://localhost:4200'}/login?error=google` }),
-    X.googleAuthCallback
-);
 
 // Verificación de email
 router.get("/user/verificar/:token", X.verificarEmail);

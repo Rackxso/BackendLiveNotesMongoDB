@@ -34,8 +34,8 @@ export const login = async (req, res) => {
         await resultado.save();
 
         // Guardar tokens en cookies HTTP-only
-        const isProd = process.env.NODE_ENV === 'production';
-        const cookieOpts = { httpOnly: true, secure: isProd, sameSite: isProd ? 'none' : 'lax' };
+        const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+        const cookieOpts = { httpOnly: true, secure: isSecure, sameSite: isSecure ? 'none' : 'lax' };
         res.cookie('accessToken', accessToken, { ...cookieOpts, maxAge: 15 * 60 * 1000 });
         res.cookie('refreshToken', refreshToken, { ...cookieOpts, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
@@ -310,25 +310,6 @@ export const upgradePlan = async (req, res) => {
         res.status(200).json({ message: "Plan actualizado exitosamente" });
     } catch (error) {
         return res.status(500).json({ message: "Error al actualizar el plan del usuario" });
-    }
-};
-
-export const googleAuthCallback = async (req, res) => {
-    try {
-        const user = req.user;
-        const payload = { id: user._id, email: user.email, permisos: user.permisos };
-        const accessToken = generarAccessToken(payload);
-        const refreshToken = generarRefreshToken(payload);
-
-        user.refreshToken = refreshToken;
-        await user.save();
-
-        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 15 * 60 * 1000 });
-        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 7 * 24 * 60 * 60 * 1000 });
-
-        res.redirect(`${FRONTEND_URL}/oauth-callback?email=${encodeURIComponent(user.email)}`);
-    } catch (error) {
-        res.redirect(`${FRONTEND_URL}/oauth-callback?error=true`);
     }
 };
 
