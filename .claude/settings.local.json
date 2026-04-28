@@ -7,7 +7,20 @@
       "Bash(npm test *)",
       "Bash(npm install *)",
       "Bash(npm uninstall *)",
-      "Bash(git merge *)"
+      "Bash(git merge *)",
+      "Bash(git rm *)",
+      "Bash(git rebase *)",
+      "Bash(GIT_EDITOR=true git rebase --continue)",
+      "Bash(EDITOR=\":\" git rebase --continue)",
+      "Bash(cat .git/rebase-merge/message)",
+      "Bash(cat .git/rebase-apply/final-commit)",
+      "Bash(ls .git/rebase-merge/)",
+      "Bash(ls .git/rebase-apply/)",
+      "Bash(git commit *)",
+      "Bash(git update-ref *)",
+      "Bash(rm -rf .git/rebase-merge)",
+      "Bash(git checkout *)",
+      "Bash(git push *)"
     ]
   }
 }
