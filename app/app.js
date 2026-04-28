@@ -8,6 +8,8 @@ import { stripeWebhook } from './controller/stripe.controller.js';
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 const corsOption = {
     origin: process.env.FRONTEND_URL,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
