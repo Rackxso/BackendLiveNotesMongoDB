@@ -311,6 +311,25 @@ export const upgradePlan = async (req, res) => {
     }
 };
 
+export const googleAuthCallback = async (req, res) => {
+    try {
+        const user = req.user;
+        const payload = { id: user._id, email: user.email, permisos: user.permisos };
+        const accessToken = generarAccessToken(payload);
+        const refreshToken = generarRefreshToken(payload);
+
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 15 * 60 * 1000 });
+        res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'none', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
+        res.redirect(`${FRONTEND_URL}/oauth-callback?email=${encodeURIComponent(user.email)}`);
+    } catch (error) {
+        res.redirect(`${FRONTEND_URL}/oauth-callback?error=true`);
+    }
+};
+
 export const updateUser = async (req, res) => {
     try {
         const { email } = req.params;

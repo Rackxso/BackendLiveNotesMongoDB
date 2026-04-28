@@ -29,9 +29,15 @@ var userSchema = new mongoose.Schema({
         unique: true, 
         index: true 
     },
-    password: { 
-        type: String, 
-        required: true 
+    password: {
+        type: String,
+        required: false,
+        default: null
+    },
+    googleId: {
+        type: String,
+        default: null,
+        index: true
     },
     permisos: {
         type: Number,
