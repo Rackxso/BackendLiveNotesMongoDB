@@ -21,9 +21,13 @@ router.get("/user/:email/info", authMiddleware, X.getUserInfo);
 router.put("/user/:email", authMiddleware, X.updateUser);
 router.post("/user/upgrade", authMiddleware, X.upgradePlan);
 
-// Cambio de contraseña
+// Cambio de contraseña (autenticado)
 router.put("/user/:email/password", authMiddleware, X.solicitarCambioPassword);
 router.post("/user/password/:token", X.confirmarCambioPassword);
+
+// Recuperación de contraseña (sin autenticación)
+router.post("/user/forgot-password", X.forgotPassword);
+router.post("/user/reset-password/:token", X.resetPassword);
 
 // Eliminación
 router.delete("/user/:email", authMiddleware, X.solicitarEliminacion);

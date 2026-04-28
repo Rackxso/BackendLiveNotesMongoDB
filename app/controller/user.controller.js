@@ -8,8 +8,10 @@ import {
     sendSolicitarCambioPassword,
     sendPasswordCambiada,
     sendSolicitarEliminacion,
-    sendCuentaEliminada
+    sendCuentaEliminada,
+    sendForgotPasswordEmail,
 } from "../utils/mailer.js";
+import { FRONTEND_URL } from "../config.js";
 
 import { generarAccessToken, generarRefreshToken } from "../utils/jwt.js";
 export const login = async (req, res) => {
@@ -146,6 +148,47 @@ export const confirmarCambioPassword = async (req, res) => {
         res.status(200).json({ message: "Contraseña actualizada exitosamente" });
     } catch (error) {
         return res.status(500).json({ message: "Error al confirmar el cambio de contraseña" });
+    }
+};
+
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const resultado = await User.findOne({ email });
+        if (!resultado) {
+            // Respuesta genérica para no revelar si el email existe
+            return res.status(200).json({ message: "Si el email existe, recibirás un enlace para restablecer tu contraseña" });
+        }
+        const token = generarToken();
+        resultado.tokenCambioPassword = token;
+        resultado.tokenCambioPasswordExpira = new Date(Date.now() + 60 * 60 * 1000);
+        await resultado.save();
+        await sendForgotPasswordEmail(email, token, FRONTEND_URL);
+        res.status(200).json({ message: "Si el email existe, recibirás un enlace para restablecer tu contraseña" });
+    } catch (error) {
+        return res.status(500).json({ message: "Error al procesar la solicitud" });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { newPassword } = req.body;
+        const resultado = await User.findOne({ tokenCambioPassword: token });
+        if (!resultado) {
+            return res.status(404).json({ message: "Token inválido o ya utilizado" });
+        }
+        if (tokenExpirado(resultado.tokenCambioPasswordExpira)) {
+            return res.status(400).json({ message: "El token ha expirado" });
+        }
+        resultado.password = newPassword;
+        resultado.tokenCambioPassword = null;
+        resultado.tokenCambioPasswordExpira = null;
+        await resultado.save();
+        await sendPasswordCambiada(resultado.email);
+        res.status(200).json({ message: "Contraseña restablecida exitosamente" });
+    } catch (error) {
+        return res.status(500).json({ message: "Error al restablecer la contraseña" });
     }
 };
 
