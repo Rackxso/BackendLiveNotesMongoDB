@@ -1,5 +1,5 @@
-import { Resend } from 'resend';
-import { MAIL_USER, RESEND_API_KEY, URL } from '../config.js';
+import nodemailer from 'nodemailer';
+import { MAIL_USER, MAIL_PASS, URL } from '../config.js';
 import {
     tmplVerificacionEmail,
     tmplEmailVerificado,
@@ -10,13 +10,16 @@ import {
     tmplForgotPassword,
 } from './emailTemplates.js';
 
-const resend = new Resend(RESEND_API_KEY);
-
-const FROM = `LiveNotes <${MAIL_USER}>`;
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: MAIL_USER,
+        pass: MAIL_PASS,
+    },
+});
 
 const send = async (to, subject, html) => {
-    const { error } = await resend.emails.send({ from: FROM, to, subject, html });
-    if (error) throw new Error(error.message);
+    await transporter.sendMail({ from: `LiveNotes <${MAIL_USER}>`, to, subject, html });
 };
 
 export const sendVerificacionEmail = (email, token) =>
