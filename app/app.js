@@ -10,8 +10,19 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:4200'
+].filter(Boolean);
+
 const corsOption = {
-    origin: process.env.FRONTEND_URL,
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true

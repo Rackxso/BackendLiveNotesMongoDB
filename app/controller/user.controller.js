@@ -1,5 +1,6 @@
 "use strict";
 
+import bcrypt from "bcryptjs";
 import { User } from "../models/user.model.js";
 import { generarToken, tokenExpirado } from "../utils/token.js";
 import {
@@ -17,8 +18,8 @@ import { generarAccessToken, generarRefreshToken } from "../utils/jwt.js";
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const resultado = await User.findOne({ email, password });
-        if (!resultado) {
+        const resultado = await User.findOne({ email });
+        if (!resultado || !await bcrypt.compare(password, resultado.password)) {
             return res.status(401).json({ message: "Usuario o contraseña incorrectos" });
         }
         if (!resultado.verificado) {
@@ -89,9 +90,10 @@ export const register = async (req, res) => {
         }
         const token = generarToken();
         const mailConfigured = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         await User.create({
-            name, email, password, permisos: 1,
+            name, email, password: hashedPassword, permisos: 1,
             tokenVerificacion: mailConfigured ? token : null,
             verificado: !mailConfigured
         });
@@ -138,16 +140,16 @@ export const solicitarCambioPassword = async (req, res) => {
         if (!resultado) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
-        if (resultado.password !== oldPassword) {
+        if (!await bcrypt.compare(oldPassword, resultado.password)) {
             return res.status(401).json({ message: "Contraseña actual incorrecta" });
         }
-        if (resultado.password === newPassword) {
+        if (await bcrypt.compare(newPassword, resultado.password)) {
             return res.status(400).json({ message: "La nueva contraseña no puede ser igual a la actual" });
         }
         const token = generarToken();
         resultado.tokenCambioPassword = token;
         resultado.tokenCambioPasswordExpira = new Date(Date.now() + 60 * 60 * 1000);
-        resultado.newPasswordPending = newPassword;
+        resultado.newPasswordPending = await bcrypt.hash(newPassword, 10);
         await resultado.save();
         await sendSolicitarCambioPassword(email, token);
         res.status(200).json({ message: "Revisa tu email para confirmar el cambio de contraseña" });
@@ -167,10 +169,10 @@ export const confirmarCambioPassword = async (req, res) => {
         if (tokenExpirado(resultado.tokenCambioPasswordExpira)) {
             return res.status(400).json({ message: "El token ha expirado" });
         }
-        if (resultado.password === newPassword) {
+        if (await bcrypt.compare(newPassword, resultado.password)) {
             return res.status(400).json({ message: "La nueva contraseña no puede ser igual a la actual" });
         }
-        resultado.password = newPassword;
+        resultado.password = await bcrypt.hash(newPassword, 10);
         resultado.tokenCambioPassword = null;
         resultado.tokenCambioPasswordExpira = null;
         resultado.newPasswordPending = null;
@@ -234,7 +236,7 @@ export const resetPassword = async (req, res) => {
         if (tokenExpirado(resultado.tokenCambioPasswordExpira)) {
             return res.status(400).json({ message: "El token ha expirado" });
         }
-        resultado.password = newPassword;
+        resultado.password = await bcrypt.hash(newPassword, 10);
         resultado.tokenCambioPassword = null;
         resultado.tokenCambioPasswordExpira = null;
         await resultado.save();

@@ -21,7 +21,11 @@
       "Bash(rm -rf .git/rebase-merge)",
       "Bash(git checkout *)",
       "Bash(git push *)",
-      "Bash(npx ng *)"
+      "Bash(npx ng *)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js\\)$\")",
+      "Bash(git add *)",
+      "WebSearch",
+      "Bash(node scripts/migrate-passwords.js)"
     ]
   }
 }
