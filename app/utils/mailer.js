@@ -15,7 +15,10 @@ const transporter = nodemailer.createTransport({
     auth: {
         user: MAIL_USER,
         pass: MAIL_PASS
-    }
+    },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 5000,
 });
 
 transporter.verify((error) => {
