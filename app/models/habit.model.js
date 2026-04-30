@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 const habitSchema = new Schema({
     userId:         { type: Schema.Types.ObjectId, ref: 'User', required: true },
     name:           { type: String, required: true },
+    icon:           { type: String, default: 'fa-solid fa-dumbbell' },
     rachaActual:    { type: Number, default: 0 },
     rachaMasLarga:  { type: Number, default: 0 },
     ultimaRacha:    { type: Number, default: 0 },

@@ -108,8 +108,8 @@ export const getHabits = async (req, res) => {
 export const createHabit = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { name } = req.body;
-        const habito = await Habit.create({ userId, name });
+        const { name, icon } = req.body;
+        const habito = await Habit.create({ userId, name, icon });
         res.status(201).json(habito);
     } catch (error) {
         return res.status(500).json({ message: 'Error al crear el hábito' });
