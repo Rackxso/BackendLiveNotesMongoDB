@@ -102,9 +102,20 @@ export const stripeWebhook = async (req, res) => {
                 break;
             }
 
+            case 'invoice.paid': {
+                // Renovación mensual exitosa — garantiza que el usuario sigue en premium
+                const invoice = event.data.object;
+                if (invoice.subscription) {
+                    await User.findOneAndUpdate(
+                        { stripeSubscriptionId: invoice.subscription },
+                        { permisos: PREMIUM_PERMISOS }
+                    );
+                }
+                break;
+            }
+
             case 'invoice.payment_failed': {
                 // Pago fallido — Stripe reintentará automáticamente según la config del dashboard
-                // Aquí puedes notificar al usuario si lo necesitas
                 break;
             }
         }

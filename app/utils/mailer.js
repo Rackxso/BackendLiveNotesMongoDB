@@ -1,5 +1,5 @@
-import nodemailer from 'nodemailer';
-import { MAIL_USER, MAIL_PASS, URL } from '../config.js';
+import { Resend } from 'resend';
+import { MAIL_USER, RESEND_API_KEY, URL } from '../config.js';
 import {
     tmplVerificacionEmail,
     tmplEmailVerificado,
@@ -10,77 +10,32 @@ import {
     tmplForgotPassword,
 } from './emailTemplates.js';
 
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    family: 4,
-    auth: {
-        user: MAIL_USER,
-        pass: MAIL_PASS
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-});
+const resend = new Resend(RESEND_API_KEY);
 
-transporter.verify((error) => {
-    if (error) console.error('[Mailer] Error de conexión SMTP:', error.message);
-    else console.log('[Mailer] Conexión SMTP lista');
-});
+const FROM = `LiveNotes <${MAIL_USER}>`;
 
-export const sendVerificacionEmail = async (email, token) => {
-    await transporter.sendMail({
-        from: MAIL_USER, to: email,
-        subject: 'Verifica tu cuenta',
-        html: tmplVerificacionEmail(`${URL}/api/user/verificar/${token}`)
-    });
+const send = async (to, subject, html) => {
+    const { error } = await resend.emails.send({ from: FROM, to, subject, html });
+    if (error) throw new Error(error.message);
 };
 
-export const sendEmailVerificado = async (email) => {
-    await transporter.sendMail({
-        from: MAIL_USER, to: email,
-        subject: 'Email verificado',
-        html: tmplEmailVerificado()
-    });
-};
+export const sendVerificacionEmail = (email, token) =>
+    send(email, 'Verifica tu cuenta', tmplVerificacionEmail(`${URL}/api/user/verificar/${token}`));
 
-export const sendSolicitarCambioPassword = async (email, token) => {
-    await transporter.sendMail({
-        from: MAIL_USER, to: email,
-        subject: 'Confirma el cambio de contraseña',
-        html: tmplSolicitarCambioPassword(`${URL}/api/user/password/${token}`)
-    });
-};
+export const sendEmailVerificado = (email) =>
+    send(email, 'Email verificado', tmplEmailVerificado());
 
-export const sendPasswordCambiada = async (email) => {
-    await transporter.sendMail({
-        from: MAIL_USER, to: email,
-        subject: 'Contraseña actualizada',
-        html: tmplPasswordCambiada()
-    });
-};
+export const sendSolicitarCambioPassword = (email, token) =>
+    send(email, 'Confirma el cambio de contraseña', tmplSolicitarCambioPassword(`${URL}/api/user/password/${token}`));
 
-export const sendSolicitarEliminacion = async (email, token) => {
-    await transporter.sendMail({
-        from: MAIL_USER, to: email,
-        subject: 'Confirma la eliminación de tu cuenta',
-        html: tmplSolicitarEliminacion(`${URL}/api/user/confirmar/${token}`)
-    });
-};
+export const sendPasswordCambiada = (email) =>
+    send(email, 'Contraseña actualizada', tmplPasswordCambiada());
 
-export const sendForgotPasswordEmail = async (email, token, frontendUrl) => {
-    await transporter.sendMail({
-        from: MAIL_USER, to: email,
-        subject: 'Restablece tu contraseña',
-        html: tmplForgotPassword(`${frontendUrl}/reset-password/${token}`)
-    });
-};
+export const sendSolicitarEliminacion = (email, token) =>
+    send(email, 'Confirma la eliminación de tu cuenta', tmplSolicitarEliminacion(`${URL}/api/user/confirmar/${token}`));
 
-export const sendCuentaEliminada = async (email) => {
-    await transporter.sendMail({
-        from: MAIL_USER, to: email,
-        subject: 'Cuenta eliminada',
-        html: tmplCuentaEliminada()
-    });
-};
+export const sendForgotPasswordEmail = (email, token, frontendUrl) =>
+    send(email, 'Restablece tu contraseña', tmplForgotPassword(`${frontendUrl}/reset-password/${token}`));
+
+export const sendCuentaEliminada = (email) =>
+    send(email, 'Cuenta eliminada', tmplCuentaEliminada());

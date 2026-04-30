@@ -26,7 +26,8 @@
       "Bash(git add *)",
       "WebSearch",
       "Bash(node scripts/migrate-passwords.js)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(grep -E \"\\\\.\\(ts|html\\)$\")"
     ]
   }
 }

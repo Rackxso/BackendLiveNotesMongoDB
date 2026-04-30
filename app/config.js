@@ -13,6 +13,7 @@ export const URL=process.env.URL
 
 export const MAIL_USER = process.env.EMAIL_USER;
 export const MAIL_PASS = process.env.EMAIL_PASS;
+export const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 export const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
