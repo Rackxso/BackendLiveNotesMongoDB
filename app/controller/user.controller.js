@@ -169,34 +169,6 @@ export const solicitarCambioPassword = async (req, res) => {
     }
 };
 
-export const confirmarCambioPassword = async (req, res) => {
-    try {
-        const { token } = req.params;
-        const { newPassword } = req.body;
-        const resultado = await User.findOne({ tokenCambioPassword: token });
-        if (!resultado) {
-            return res.status(404).json({ message: "Token inválido" });
-        }
-        if (tokenExpirado(resultado.tokenCambioPasswordExpira)) {
-            return res.status(400).json({ message: "El token ha expirado" });
-        }
-        const errorPassword = validarPassword(newPassword);
-        if (errorPassword) return res.status(400).json({ message: errorPassword });
-        if (await bcrypt.compare(newPassword, resultado.password)) {
-            return res.status(400).json({ message: "La nueva contraseña no puede ser igual a la actual" });
-        }
-        resultado.password = await bcrypt.hash(newPassword, 10);
-        resultado.passwordCompliant = true;
-        resultado.tokenCambioPassword = null;
-        resultado.tokenCambioPasswordExpira = null;
-        resultado.newPasswordPending = null;
-        await resultado.save();
-        await sendPasswordCambiada(resultado.email);
-        res.status(200).json({ message: "Contraseña actualizada exitosamente" });
-    } catch (error) {
-        return res.status(500).json({ message: "Error al confirmar el cambio de contraseña" });
-    }
-};
 
 export const confirmarCambioPasswordGet = async (req, res) => {
     try {

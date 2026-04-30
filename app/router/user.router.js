@@ -24,7 +24,6 @@ router.post("/user/upgrade", authMiddleware, X.upgradePlan);
 
 // Cambio de contraseña (autenticado)
 router.put("/user/:email/password", authMiddleware, X.solicitarCambioPassword);
-router.post("/user/password/:token", X.confirmarCambioPassword);
 router.get("/user/password/:token", X.confirmarCambioPasswordGet);
 
 // Recuperación de contraseña (sin autenticación)
