@@ -64,6 +64,7 @@ var userSchema = new mongoose.Schema({
     },
     newPasswordPending: { type: String, default: null },
     refreshToken: { type: String, default: null },
+    passwordCompliant: { type: Boolean, default: false },
     stripeCustomerId: { type: String, default: null },
     stripeSubscriptionId: { type: String, default: null },
 }, {

@@ -15,6 +15,14 @@ import {
 import { FRONTEND_URL } from "../config.js";
 
 import { generarAccessToken, generarRefreshToken, verificarRefreshToken } from "../utils/jwt.js";
+
+const validarPassword = (password) => {
+    if (!password || password.length < 8) return "La contraseña debe tener al menos 8 caracteres";
+    if (!/[A-Z]/.test(password)) return "La contraseña debe tener al menos una letra mayúscula";
+    if (!/[0-9]/.test(password)) return "La contraseña debe tener al menos un número";
+    return null;
+};
+
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -44,7 +52,8 @@ export const login = async (req, res) => {
             message: "Login exitoso",
             user: { email: resultado.email, name: resultado.name, permisos: resultado.permisos },
             accessToken,
-            refreshToken
+            refreshToken,
+            requiresPasswordUpdate: !resultado.passwordCompliant
         });
     } catch (error) {
         return res.status(500).json({ message: "Error al iniciar sesión" , error: error.message });
@@ -88,12 +97,15 @@ export const register = async (req, res) => {
         if (check) {
             return res.status(409).json({ message: "Ya existe un usuario con ese email" });
         }
+        const errorPassword = validarPassword(password);
+        if (errorPassword) return res.status(400).json({ message: errorPassword });
+
         const token = generarToken();
         const mailConfigured = !!(process.env.EMAIL_USER && process.env.EMAIL_PASS);
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await User.create({
-            name, email, password: hashedPassword, permisos: 1,
+            name, email, password: hashedPassword, permisos: 1, passwordCompliant: true,
             tokenVerificacion: mailConfigured ? token : null,
             verificado: !mailConfigured
         });
@@ -133,9 +145,8 @@ export const solicitarCambioPassword = async (req, res) => {
     try {
         const { email } = req.params;
         const { oldPassword, newPassword } = req.body;
-        if (!newPassword) {
-            return res.status(400).json({ message: "La nueva contraseña es requerida" });
-        }
+        const errorPassword = validarPassword(newPassword);
+        if (errorPassword) return res.status(400).json({ message: errorPassword });
         const resultado = await User.findOne({ email });
         if (!resultado) {
             return res.status(404).json({ message: "Usuario no encontrado" });
@@ -169,10 +180,13 @@ export const confirmarCambioPassword = async (req, res) => {
         if (tokenExpirado(resultado.tokenCambioPasswordExpira)) {
             return res.status(400).json({ message: "El token ha expirado" });
         }
+        const errorPassword = validarPassword(newPassword);
+        if (errorPassword) return res.status(400).json({ message: errorPassword });
         if (await bcrypt.compare(newPassword, resultado.password)) {
             return res.status(400).json({ message: "La nueva contraseña no puede ser igual a la actual" });
         }
         resultado.password = await bcrypt.hash(newPassword, 10);
+        resultado.passwordCompliant = true;
         resultado.tokenCambioPassword = null;
         resultado.tokenCambioPasswordExpira = null;
         resultado.newPasswordPending = null;
@@ -195,6 +209,7 @@ export const confirmarCambioPasswordGet = async (req, res) => {
             return res.redirect(`${FRONTEND_URL}/email-confirmado?tipo=error`);
         }
         resultado.password = resultado.newPasswordPending;
+        resultado.passwordCompliant = true;
         resultado.newPasswordPending = null;
         resultado.tokenCambioPassword = null;
         resultado.tokenCambioPasswordExpira = null;
@@ -236,7 +251,10 @@ export const resetPassword = async (req, res) => {
         if (tokenExpirado(resultado.tokenCambioPasswordExpira)) {
             return res.status(400).json({ message: "El token ha expirado" });
         }
+        const errorPassword = validarPassword(newPassword);
+        if (errorPassword) return res.status(400).json({ message: errorPassword });
         resultado.password = await bcrypt.hash(newPassword, 10);
+        resultado.passwordCompliant = true;
         resultado.tokenCambioPassword = null;
         resultado.tokenCambioPasswordExpira = null;
         await resultado.save();
