@@ -14,7 +14,7 @@ import {
 } from "../utils/mailer.js";
 import { FRONTEND_URL } from "../config.js";
 
-import { generarAccessToken, generarRefreshToken } from "../utils/jwt.js";
+import { generarAccessToken, generarRefreshToken, verificarRefreshToken } from "../utils/jwt.js";
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
