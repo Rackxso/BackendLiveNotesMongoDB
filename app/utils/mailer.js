@@ -18,6 +18,11 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+transporter.verify((error) => {
+    if (error) console.error('[Mailer] Error de conexión SMTP:', error.message);
+    else console.log('[Mailer] Conexión SMTP lista');
+});
+
 export const sendVerificacionEmail = async (email, token) => {
     await transporter.sendMail({
         from: MAIL_USER, to: email,

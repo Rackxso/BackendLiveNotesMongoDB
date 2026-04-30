@@ -162,10 +162,15 @@ export const solicitarCambioPassword = async (req, res) => {
         resultado.tokenCambioPasswordExpira = new Date(Date.now() + 60 * 60 * 1000);
         resultado.newPasswordPending = await bcrypt.hash(newPassword, 10);
         await resultado.save();
-        await sendSolicitarCambioPassword(email, token);
+        try {
+            await sendSolicitarCambioPassword(email, token);
+        } catch (mailError) {
+            console.error('[solicitarCambioPassword] Error al enviar email:', mailError.message);
+            return res.status(500).json({ message: `Error al enviar el email: ${mailError.message}` });
+        }
         res.status(200).json({ message: "Revisa tu email para confirmar el cambio de contraseña" });
     } catch (error) {
-        return res.status(500).json({ message: "Error al solicitar el cambio de contraseña" });
+        return res.status(500).json({ message: "Error al solicitar el cambio de contraseña", error: error.message });
     }
 };
 
