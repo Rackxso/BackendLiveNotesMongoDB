@@ -307,7 +307,12 @@ export const getUserInfo = async (req, res) => {
         if (!resultado) {
             return res.status(404).json({ message: "Usuario no encontrado" });
         }
-        res.status(200).json({ email: resultado.email, name: resultado.name, permisos: resultado.permisos });
+        res.status(200).json({
+            email: resultado.email,
+            name: resultado.name,
+            permisos: resultado.permisos,
+            hasStripeSubscription: !!resultado.stripeCustomerId,
+        });
     } catch (error) {
         return res.status(500).json({ message: "Error al obtener la información del usuario" });
     }
