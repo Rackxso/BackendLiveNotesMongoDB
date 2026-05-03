@@ -4,6 +4,10 @@ import cors from 'cors';
 import { apiRouter } from './router/index.router.js';
 import cookieParser from 'cookie-parser';
 import { stripeWebhook } from './controller/stripe.controller.js';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
 const app = express();
@@ -30,6 +34,7 @@ const corsOption = {
 
 app.use(cookieParser());
 app.use(cors(corsOption));
+app.use('/public', express.static(join(__dirname, 'public')));
 
 // El webhook necesita el body en raw antes de express.json()
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhook);

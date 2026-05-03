@@ -1,3 +1,7 @@
+import { URL as BASE_URL } from '../config.js';
+
+const LOGO_URL = `${BASE_URL}/public/Logo.png`;
+
 const baseTemplate = (title, content) => `
 <!DOCTYPE html>
 <html lang="es">
@@ -15,8 +19,9 @@ const baseTemplate = (title, content) => `
 
           <!-- Header -->
           <tr>
-            <td style="background-color:#D4956A;border-radius:12px 12px 0 0;padding:32px 40px;text-align:center;">
-              <h1 style="margin:0;font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:#FDF8F2;letter-spacing:0.5px;">
+            <td style="background-color:#D4956A;border-radius:12px 12px 0 0;padding:24px 40px;text-align:center;">
+              <img src="${LOGO_URL}" alt="LiveNotes" width="72" height="72" style="display:block;margin:0 auto 8px auto;border-radius:16px;" />
+              <h1 style="margin:0;font-family:'Fraunces',serif;font-size:24px;font-weight:600;color:#FDF8F2;letter-spacing:0.5px;">
                 LiveNotes
               </h1>
             </td>
