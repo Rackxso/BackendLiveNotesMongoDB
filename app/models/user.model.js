@@ -67,6 +67,7 @@ var userSchema = new mongoose.Schema({
     passwordCompliant: { type: Boolean, default: false },
     stripeCustomerId: { type: String, default: null },
     stripeSubscriptionId: { type: String, default: null },
+    completedTours: { type: [String], default: [] },
 }, {
     timestamps: false,
     collection: 'Users',

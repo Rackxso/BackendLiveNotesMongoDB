@@ -336,6 +336,37 @@ export const upgradePlan = async (req, res) => {
     }
 };
 
+export const getCompletedTours = async (req, res) => {
+    try {
+        const { email } = req.params;
+        const user = await User.findOne({ email }).select('completedTours');
+        if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+        res.status(200).json({ completedTours: user.completedTours });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al obtener tours', error: error.message });
+    }
+};
+
+export const markTourCompleted = async (req, res) => {
+    try {
+        const { email, tourId } = req.params;
+        await User.updateOne({ email }, { $addToSet: { completedTours: tourId } });
+        res.status(200).json({ message: 'Tour completado' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al marcar tour', error: error.message });
+    }
+};
+
+export const resetTours = async (req, res) => {
+    try {
+        const { email } = req.params;
+        await User.updateOne({ email }, { $set: { completedTours: [] } });
+        res.status(200).json({ message: 'Tours reseteados' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al resetear tours', error: error.message });
+    }
+};
+
 export const updateUser = async (req, res) => {
     try {
         const { email } = req.params;

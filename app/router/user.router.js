@@ -18,6 +18,11 @@ router.get("/user/verificar/:token", X.verificarEmail);
 router.get("/user/:email/permisos", authMiddleware, X.getPermisos);
 router.get("/user/:email/info", authMiddleware, X.getUserInfo);
 
+// Tours completados
+router.get("/user/:email/tours", authMiddleware, X.getCompletedTours);
+router.patch("/user/:email/tours/:tourId", authMiddleware, X.markTourCompleted);
+router.delete("/user/:email/tours", authMiddleware, X.resetTours);
+
 // Actualizar
 router.put("/user/:email", authMiddleware, X.updateUser);
 router.post("/user/upgrade", authMiddleware, X.upgradePlan);
