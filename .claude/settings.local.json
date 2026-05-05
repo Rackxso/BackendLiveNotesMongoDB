@@ -27,7 +27,9 @@
       "WebSearch",
       "Bash(node scripts/migrate-passwords.js)",
       "Bash(npx tsc *)",
-      "Bash(grep -E \"\\\\.\\(ts|html\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|html\\)$\")",
+      "Bash(xargs -0 grep -l \"skeleton\\\\|loader\\\\|spinner\\\\|loading\\\\|shimmer\")",
+      "Bash(dir \"c:\\\\Users\\\\ourena\\\\proyecto\\\\LiveNotes\\\\src\\\\app\\\\services\")"
     ]
   }
 }
